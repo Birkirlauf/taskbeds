@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+body {
+  @apply antialiased;
+}
+
+/* Form styles */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  @apply appearance-none;
+}
+
+/* Button styles */
+button {
+  @apply transition-colors duration-200;
+}
+
+/* Auth pages */
+.auth-page {
+  @apply min-h-screen bg-gray-50;
+} 

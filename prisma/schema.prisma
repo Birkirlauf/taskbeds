@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model Hotel {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name    String
+  address String
+  phone   String?
+  email   String?
+
+  // Relations
+  users    User[]
+  rooms    Room[]
+  tasks    Task[]
+
+  @@map("hotels")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  email     String  @unique
+  password  String
+  firstName String
+  lastName  String
+  role      Role    @default(STAFF)
+  status    UserStatus @default(ACTIVE)
+
+  // Relations
+  hotel      Hotel    @relation(fields: [hotelId], references: [id])
+  hotelId    String
+  tasks      Task[]
+
+  @@map("users")
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  number      String
+  type        RoomType @default(STANDARD)
+  status      RoomStatus @default(VACANT)
+  floor       Int
+  notes       String?
+
+  // Relations
+  hotel   Hotel @relation(fields: [hotelId], references: [id])
+  hotelId String
+  tasks   Task[]
+
+  @@unique([hotelId, number])
+  @@map("rooms")
+}
+
+model Task {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title       String
+  description String?
+  status      TaskStatus @default(PENDING)
+  priority    Priority   @default(MEDIUM)
+  dueDate     DateTime?
+
+  // Relations
+  hotel   Hotel  @relation(fields: [hotelId], references: [id])
+  hotelId String
+  room    Room?  @relation(fields: [roomId], references: [id])
+  roomId  String?
+  user    User?  @relation(fields: [userId], references: [id])
+  userId  String?
+
+  @@map("tasks")
+}
+
+enum Role {
+  MANAGER
+  STAFF
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum RoomType {
+  STANDARD
+  DELUXE
+  SUITE
+}
+
+enum RoomStatus {
+  VACANT
+  OCCUPIED
+  CLEANING
+  MAINTENANCE
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+} 
