@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { auth } from './lib/auth';
+import { verifyToken } from './lib/auth-server';
 
 // List of paths that don't require authentication
 const publicPaths = [
@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Verify token
-    const verified = await auth.verifyToken(token);
+    const verified = await verifyToken(token);
     if (!verified) {
       throw new Error('Invalid token');
     }
