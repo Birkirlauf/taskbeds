@@ -1,11 +1,9 @@
-'use client';
-
 import type { Metadata } from 'next'
-import { SessionProvider } from 'next-auth/react';
-import { Inter } from 'next/font/google';
-import './globals.css';
+import { Inter } from 'next/font/google'
+import './globals.css'
+import ClientLayout from '@/components/ClientLayout'
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'TaskBeds - Hotel Management System',
@@ -31,7 +29,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en">
@@ -41,10 +39,8 @@ export default function RootLayout({
         <link rel="manifest" href="/site.webmanifest" />
       </head>
       <body className={inter.className}>
-        <SessionProvider>
-          {children}
-        </SessionProvider>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
-  );
+  )
 }

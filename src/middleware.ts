@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { auth } from './auth'
 
 // Paths that don't require authentication
-const publicPaths = ['/auth/login', '/auth/register', '/api/auth']
+const publicPaths = ['/auth/login', '/auth/register', '/api/auth', '/_next', '/favicon.ico']
 
 export async function middleware(request: NextRequest) {
   // Add security headers
@@ -30,12 +30,21 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Check authentication
-  const session = await auth()
-  if (!session) {
-    const loginUrl = new URL('/auth/login', request.url)
-    loginUrl.searchParams.set('callbackUrl', request.url)
-    return NextResponse.redirect(loginUrl)
+  try {
+    // Check authentication
+    const session = await auth()
+    if (!session) {
+      const loginUrl = new URL('/auth/login', request.url)
+      loginUrl.searchParams.set('callbackUrl', request.url)
+      return NextResponse.redirect(loginUrl)
+    }
+  } catch (error) {
+    console.error('Auth error:', error)
+    // If auth fails, still allow the request but redirect to login if needed
+    if (request.nextUrl.pathname !== '/auth/login') {
+      const loginUrl = new URL('/auth/login', request.url)
+      return NextResponse.redirect(loginUrl)
+    }
   }
 
   return response
@@ -49,7 +58,6 @@ export const config = {
      * 2. /_next/static (static files)
      * 3. /_next/image (image optimization files)
      * 4. /favicon.ico (favicon file)
-     * 5. /api/trpc (tRPC endpoints)
      */
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
