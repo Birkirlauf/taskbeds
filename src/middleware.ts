@@ -3,11 +3,9 @@ import type { NextRequest } from 'next/server'
 import { auth } from './auth'
 
 // Paths that don't require authentication
-const publicPaths = ['/auth/login', '/auth/register']
+const publicPaths = ['/auth/login', '/auth/register', '/api/auth']
 
 export async function middleware(request: NextRequest) {
-  const session = await auth()
-
   // Add security headers
   const response = NextResponse.next()
   response.headers.set('X-DNS-Prefetch-Control', 'on')
@@ -20,13 +18,24 @@ export async function middleware(request: NextRequest) {
   // Cache control for static assets
   if (request.nextUrl.pathname.startsWith('/_next/static')) {
     response.headers.set('Cache-Control', 'public, max-age=31536000, immutable')
+    return response
   }
 
-  // Check authentication for protected routes
-  const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
+  // Skip auth check for public paths
+  const isPublicPath = publicPaths.some(path => 
+    request.nextUrl.pathname.startsWith(path)
+  )
   
-  if (!isPublicPath && !session) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
+  if (isPublicPath) {
+    return response
+  }
+
+  // Check authentication
+  const session = await auth()
+  if (!session) {
+    const loginUrl = new URL('/auth/login', request.url)
+    loginUrl.searchParams.set('callbackUrl', request.url)
+    return NextResponse.redirect(loginUrl)
   }
 
   return response
@@ -40,7 +49,8 @@ export const config = {
      * 2. /_next/static (static files)
      * 3. /_next/image (image optimization files)
      * 4. /favicon.ico (favicon file)
+     * 5. /api/trpc (tRPC endpoints)
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }
