@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
@@ -15,6 +15,8 @@ import {
   Calendar,
   BarChart3,
   X,
+  Brush,
+  LucideIcon,
 } from 'lucide-react';
 import { auth } from '@/lib/auth';
 
@@ -22,24 +24,37 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
+// Add type definitions for navigation items
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+}
+
 export default function Sidebar({ onClose }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
 
   const handleSignOut = async () => {
-    await auth.logout();
-    router.push('/auth/login');
+    try {
+      await auth.logout();
+      router.push('/auth/login');
+    } catch (error) {
+      console.error('Failed to sign out:', error);
+      // Add error notification here
+    }
   };
 
-  const navigation = [
+  const navigation = useMemo(() => [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Rooms', href: '/rooms', icon: BedDouble },
     { name: 'Tasks', href: '/tasks', icon: ClipboardList },
     { name: 'Staff', href: '/staff', icon: Users },
     { name: 'Issues', href: '/issues', icon: AlertCircle },
-  ];
+  ], []);
 
   const secondaryNavigation = [
+    { name: 'Cleaning Management', href: '/cleaning/manage', icon: Brush },
     { name: 'Schedule', href: '/staff/schedule', icon: Calendar },
     { name: 'Performance', href: '/staff/performance', icon: BarChart3 },
     { name: 'Settings', href: '/settings', icon: Settings },
@@ -59,6 +74,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
           <button
             onClick={onClose}
             className="lg:hidden p-2 -mr-2 hover:bg-gray-50 rounded-md"
+            aria-label="Close sidebar"
           >
             <X className="h-5 w-5 text-gray-500" />
           </button>
