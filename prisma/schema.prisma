@@ -4,8 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL")
-  directUrl = env("POSTGRES_URL_NON_POOLING")
+  url      = env("DATABASE_URL")
 }
 
 model Hotel {
@@ -47,15 +46,15 @@ model User {
 }
 
 model Room {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  number      String
-  type        RoomType @default(STANDARD)
-  status      RoomStatus @default(VACANT)
-  floor       Int
-  notes       String?
+  id           String         @id @default(cuid())
+  number       String
+  type         String
+  status       String         @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  assignedToId String?
+  assignedTo   User?         @relation(fields: [assignedToId], references: [id])
+  lastCleaned  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   // Relations
   hotel   Hotel @relation(fields: [hotelId], references: [id])

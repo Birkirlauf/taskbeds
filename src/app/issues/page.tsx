@@ -79,6 +79,18 @@ const mockIssues: Issue[] = [
   }
 ];
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+};
+
 export default function Issues() {
   const [issues, setIssues] = useState<Issue[]>(mockIssues);
   const [searchQuery, setSearchQuery] = useState('');
@@ -164,7 +176,7 @@ export default function Issues() {
         <div className="flex justify-between items-center text-sm border-t pt-4">
           <div className="space-y-1">
             <div className="text-gray-500">
-              Reported: {new Date(issue.reportedAt).toLocaleString()}
+              Reported: {formatDate(issue.reportedAt)}
             </div>
             {issue.assignedTo && (
               <div className="text-gray-500">

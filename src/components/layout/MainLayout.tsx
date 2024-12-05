@@ -17,10 +17,17 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      <main className="flex-1 ml-64 p-8">
-        {children}
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <div className="w-[240px] border-r border-gray-200 bg-white">
+        <Sidebar />
+      </div>
+
+      {/* Main content */}
+      <main className="flex-1 bg-gray-50">
+        <div className="p-8">
+          {children}
+        </div>
       </main>
     </div>
   );

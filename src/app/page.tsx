@@ -1,10 +1,20 @@
 import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth-server';
 
 export default async function Home() {
-  const user = await auth.getCurrentUser();
+  const token = cookies().get('auth_token')?.value;
 
-  if (!user) {
+  if (!token) {
+    redirect('/auth/login');
+  }
+
+  try {
+    const verified = await verifyToken(token);
+    if (!verified) {
+      redirect('/auth/login');
+    }
+  } catch (error) {
     redirect('/auth/login');
   }
 
