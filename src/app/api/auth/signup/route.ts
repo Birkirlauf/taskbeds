@@ -1,100 +1,92 @@
-import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { prisma } from '@/lib/db';
-import { createToken, setAuthCookie } from '@/lib/auth-server';
+import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import prisma from "@/lib/prisma";
 
-export async function POST(request: Request) {
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: NextRequest) {
   try {
-    const data = await request.json();
+    const body = await req.json();
+    console.log("Received signup request:", { ...body, password: '[REDACTED]' });
     
-    // Validate required fields
-    const requiredFields = ['firstName', 'lastName', 'email', 'password', 'hotelName', 'hotelAddress'];
-    for (const field of requiredFields) {
-      if (!data[field]) {
-        return NextResponse.json(
-          { error: `${field} is required` },
-          { status: 400 }
-        );
-      }
-    }
+    const { firstName, lastName, email, password, phoneNumber, hotelName, hotelAddress } = body;
 
-    // Validate email format
-    if (!data.email.includes('@')) {
+    if (!firstName || !lastName || !email || !password || !phoneNumber || !hotelName || !hotelAddress) {
+      console.log("Missing fields:", { 
+        firstName: !!firstName,
+        lastName: !!lastName,
+        email: !!email,
+        password: !!password,
+        phoneNumber: !!phoneNumber,
+        hotelName: !!hotelName,
+        hotelAddress: !!hotelAddress
+      });
       return NextResponse.json(
-        { error: 'Invalid email format' },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Validate password strength
-    if (data.password.length < 8) {
-      return NextResponse.json(
-        { error: 'Password must be at least 8 characters long' },
-        { status: 400 }
-      );
-    }
-
-    // Check if email already exists
+    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email: data.email },
+      where: { email },
     });
 
     if (existingUser) {
+      console.log("User already exists:", email);
       return NextResponse.json(
-        { error: 'Email already registered' },
+        { error: "Email already registered" },
         { status: 400 }
       );
     }
 
-    // Create hotel first
+    console.log("Creating hotel...");
+    // Create hotel
     const hotel = await prisma.hotel.create({
       data: {
-        name: data.hotelName,
-        address: data.hotelAddress,
-        email: data.email,
-        phone: data.phoneNumber,
+        name: hotelName,
+        address: hotelAddress,
+        phone: phoneNumber,
       },
     });
+    console.log("Hotel created:", hotel.id);
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(data.password, 12);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user with hotel relation
+    console.log("Creating user...");
+    // Create user with proper schema fields
     const user = await prisma.user.create({
       data: {
-        email: data.email,
+        email,
         password: hashedPassword,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: 'MANAGER',
+        firstName,
+        lastName,
+        name: `${firstName} ${lastName}`,
+        role: "MANAGER",
+        status: "ACTIVE",
         hotelId: hotel.id,
       },
-      include: {
-        hotel: true,
-      },
     });
+    console.log("User created:", user.id);
 
-    // Create session token
-    const token = await createToken({
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      hotelId: user.hotelId,
-    });
-
-    // Set auth cookie
-    await setAuthCookie(token);
-
-    // Return user data (excluding password)
-    const { password: _, ...userData } = user;
-    return NextResponse.json(userData);
-  } catch (error: any) {
-    console.error('Signup error:', error);
     return NextResponse.json(
-      { error: error.message || 'Registration failed' },
-      { status: 400 }
+      { 
+        message: "Account created successfully",
+        userId: user.id,
+        hotelId: hotel.id
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Signup error:", error);
+    // Return more specific error message
+    return NextResponse.json(
+      { 
+        error: "Error creating account",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
+      { status: 500 }
     );
   }
 } 

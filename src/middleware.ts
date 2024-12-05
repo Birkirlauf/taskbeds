@@ -1,30 +1,38 @@
-import { withAuth } from "next-auth/middleware";
+import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const isAuth = !!token;
-    const isAuthPage = req.nextUrl.pathname.startsWith('/auth');
+export default auth((req) => {
+  const isAuthPage = req.nextUrl.pathname.startsWith('/login') || 
+                    req.nextUrl.pathname.startsWith('/signup') ||
+                    req.nextUrl.pathname.startsWith('/forgot-password');
 
-    if (isAuthPage) {
-      if (isAuth) {
-        return NextResponse.redirect(new URL('/cleaning', req.url));
-      }
-      return null;
+  if (isAuthPage) {
+    if (req.auth) {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
     }
-
-    if (!isAuth) {
-      return NextResponse.redirect(new URL('/auth/login', req.url));
-    }
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
+    return NextResponse.next();
   }
-);
+
+  if (!req.auth) {
+    let from = req.nextUrl.pathname;
+    if (from === '/') from = '/dashboard';
+    const url = new URL('/login', req.url);
+    url.searchParams.set('from', from);
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
+});
 
 export const config = {
-  matcher: ['/cleaning/:path*', '/auth/:path*'],
-}; 
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
+};
