@@ -7,7 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^17.0.0",
